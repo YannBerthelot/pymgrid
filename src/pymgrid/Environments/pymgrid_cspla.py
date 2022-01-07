@@ -108,7 +108,7 @@ class MicroGridEnv(Environment):
                 "genset": 0,
             },
         }
-        return policies[policies.keys[action]]
+        return policies[list(set(policies.keys()))[action]]
 
     def get_action(self, action):
         return self.micro_policy(action)
