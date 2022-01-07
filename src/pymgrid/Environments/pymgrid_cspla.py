@@ -25,6 +25,7 @@ import gym
 from gym.utils import seeding
 from gym.spaces import Space, Discrete, Box
 
+
 class MicroGridEnv(Environment):
     """
     Markov Decision Process associated to the microgrid.
@@ -40,14 +41,74 @@ class MicroGridEnv(Environment):
 
     def __init__(self, env_config, seed=42):
         super().__init__(env_config, seed)
-        self.Na = 2 + self.mg.architecture['grid'] * 3 + self.mg.architecture['genset'] * 1
+        self.Na = 7
         self.action_space = Discrete(self.Na)
 
-
+    def micro_policy(self, action):
+        mg = self.mg
+        load = mg.load
+        pv = mg.pv
+        capa_to_charge = mg.battery.capa_to_charge
+        capa_to_discharge = mg.battery.capa_to_discharge
+        policies = {
+            "sell_excess": {
+                "battery_charge": 0,
+                "battery_discharge": 0,
+                "grid_import": 0,
+                "grid_export": max(0, pv - load),
+                "pv": min(pv, load),
+                "genset": 0,
+            },
+            "store_excess": {
+                "battery_charge": max(0, pv - load),
+                "battery_discharge": 0,
+                "grid_import": 0,
+                "grid_export": 0,
+                "pv": min(pv, load),
+                "genset": 0,
+            },
+            "fill_battery_from_grid": {
+                "battery_charge": capa_to_charge,
+                "battery_discharge": 0,
+                "grid_import": capa_to_charge + (load - pv),
+                "grid_export": 0,
+                "pv": min(pv, load),
+                "genset": 0,
+            },
+            "buy_for_load": {
+                "battery_charge": 0,
+                "battery_discharge": 0,
+                "grid_import": max(0, load - pv),
+                "grid_export": 0,
+                "pv": min(pv, load),
+                "genset": 0,
+            },
+            "genset_for_load": {
+                "battery_charge": 0,
+                "battery_discharge": 0,
+                "grid_import": 0,
+                "grid_export": 0,
+                "pv": min(pv, load),
+                "genset": max(0, load - pv),
+            },
+            "discharge_to_sell": {
+                "battery_charge": 0,
+                "battery_discharge": capa_to_discharge,
+                "grid_import": max(0, load - pv - capa_to_discharge),
+                "grid_export": max(0, capa_to_discharge + pv - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "discharge_for_load": {
+                "battery_charge": 0,
+                "battery_discharge": min(capa_to_discharge, load - pv),
+                "grid_import": max(0, load - pv - capa_to_discharge),
+                "grid_export": 0,
+                "pv": min(pv, load),
+                "genset": 0,
+            },
+        }
+        return policies[policies.keys[action]]
 
     def get_action(self, action):
-        return self.get_action_priority_list(action)
-
-    
-
-
+        return self.micro_policy(action)
