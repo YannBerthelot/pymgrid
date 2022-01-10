@@ -41,7 +41,7 @@ class MicroGridEnv(Environment):
 
     def __init__(self, env_config, seed=42):
         super().__init__(env_config, seed)
-        self.Na = 7
+        self.Na = 8
         self.action_space = Discrete(self.Na)
 
     def micro_policy(self, action):
@@ -54,7 +54,7 @@ class MicroGridEnv(Environment):
             "sell_excess": {
                 "battery_charge": 0,
                 "battery_discharge": 0,
-                "grid_import": 0,
+                "grid_import": max(0, load - pv),
                 "grid_export": max(0, pv - load),
                 "pv": min(pv, load),
                 "genset": 0,
@@ -62,7 +62,7 @@ class MicroGridEnv(Environment):
             "store_excess": {
                 "battery_charge": max(0, pv - load),
                 "battery_discharge": 0,
-                "grid_import": 0,
+                "grid_import": max(0, load - pv),
                 "grid_export": 0,
                 "pv": min(pv, load),
                 "genset": 0,
@@ -74,6 +74,14 @@ class MicroGridEnv(Environment):
                 "grid_export": 0,
                 "pv": min(pv, load),
                 "genset": 0,
+            },
+            "fill_battery_from_genset": {
+                "battery_charge": capa_to_charge,
+                "battery_discharge": 0,
+                "grid_import": 0,
+                "grid_export": 0,
+                "pv": min(pv, load),
+                "genset": capa_to_charge + (load - pv),
             },
             "buy_for_load": {
                 "battery_charge": 0,
