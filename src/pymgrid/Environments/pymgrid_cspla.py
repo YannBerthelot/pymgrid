@@ -51,7 +51,7 @@ class MicroGridEnv(Environment):
         capa_to_charge = mg.battery.capa_to_charge
         capa_to_discharge = mg.battery.capa_to_discharge
         policies = {
-            "sell_excess": {
+            "sell_excess": {  # 0
                 "battery_charge": 0,
                 "battery_discharge": 0,
                 "grid_import": max(0, load - pv),
@@ -59,7 +59,7 @@ class MicroGridEnv(Environment):
                 "pv": min(pv, load),
                 "genset": 0,
             },
-            "store_excess": {
+            "store_excess": {  # 1
                 "battery_charge": max(0, pv - load),
                 "battery_discharge": 0,
                 "grid_import": max(0, load - pv),
@@ -67,7 +67,7 @@ class MicroGridEnv(Environment):
                 "pv": min(pv, load),
                 "genset": 0,
             },
-            "fill_battery_from_grid": {
+            "fill_battery_from_grid": {  # 2
                 "battery_charge": capa_to_charge,
                 "battery_discharge": 0,
                 "grid_import": capa_to_charge + (load - pv),
@@ -75,15 +75,15 @@ class MicroGridEnv(Environment):
                 "pv": min(pv, load),
                 "genset": 0,
             },
-            "fill_battery_from_genset": {
+            "fill_battery_from_genset": {  # 3
                 "battery_charge": capa_to_charge,
                 "battery_discharge": 0,
                 "grid_import": 0,
                 "grid_export": 0,
                 "pv": min(pv, load),
-                "genset": capa_to_charge + (load - pv),
+                "genset": max(0, capa_to_charge + (load - pv)),
             },
-            "buy_for_load": {
+            "buy_for_load": {  # 4
                 "battery_charge": 0,
                 "battery_discharge": 0,
                 "grid_import": max(0, load - pv),
@@ -91,7 +91,7 @@ class MicroGridEnv(Environment):
                 "pv": min(pv, load),
                 "genset": 0,
             },
-            "genset_for_load": {
+            "genset_for_load": {  # 5
                 "battery_charge": 0,
                 "battery_discharge": 0,
                 "grid_import": 0,
@@ -99,7 +99,7 @@ class MicroGridEnv(Environment):
                 "pv": min(pv, load),
                 "genset": max(0, load - pv),
             },
-            "discharge_to_sell": {
+            "discharge_to_sell": {  # 6
                 "battery_charge": 0,
                 "battery_discharge": capa_to_discharge,
                 "grid_import": max(0, load - pv - capa_to_discharge),
@@ -107,7 +107,7 @@ class MicroGridEnv(Environment):
                 "pv": pv,
                 "genset": 0,
             },
-            "discharge_for_load": {
+            "discharge_for_load": {  # 7
                 "battery_charge": 0,
                 "battery_discharge": min(capa_to_discharge, load - pv),
                 "grid_import": max(0, load - pv - capa_to_discharge),
