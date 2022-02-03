@@ -30,6 +30,34 @@ import pickle
 from IPython.display import display
 from pathlib import Path
 
+# MICROGRID_DEFAULT_CONFIG : {
+#     'load_type':'Folder', #or 'File'
+#     'load_path': 'default', # or a specific path
+#     'pv_type':'Folder', #or 'File'
+#     'pv_path': 'default', # or a specific path
+#     'co2_type':'Folder', #or 'File'
+#     'co2_path': 'default', # or a specific path
+
+
+#     'parameters':{
+
+#     }, #Dictionary
+#     'df_actions':df_actions, #Dataframe
+#     'architecture':architecture, #Dictionary
+#     'df_status':df_status, #Dictionary
+#     'df_actual_generation':df_actual_production,#Dataframe
+#     'grid_spec':grid_spec, #value = 0
+#     'df_cost':df_cost, #Dataframe of 1 value = 0.0
+#     'df_co2': df_co2,
+#     'pv':pv, #Dataframe
+#     'load': load, #Dataframe
+#     'grid_ts':grid_ts, #Dataframe
+#     'control_dict': column_actions, #dictionnary
+#     'grid_price_import' : grid_price_import_ts,
+#     'grid_price_export' : grid_price_export_ts,
+#     'grid_co2': grid_co2_ts,
+# }
+
 class MicrogridGenerator:
     """
         The class MicrogridGenerator generates a number of microgrids with differerent and randomized paramters based on
@@ -381,6 +409,32 @@ class MicrogridGenerator:
         temp_mgen.path = str(Path(__file__).parent.parent)
         return temp_mgen
 
+    def _bin_genset_grid(self):
+        rand = np.random.rand()
+        bin_genset = 0
+        bin_grid = 0
+
+        if rand < 0.33:
+
+            bin_genset = 1
+
+        elif rand >= 0.33 and rand < 0.66:
+
+            bin_grid = 1
+
+        else:
+
+            bin_genset = 1
+            bin_grid = 1
+
+        return bin_genset, bin_grid
+
+    def _size_load(self, size_load=None):
+        if size_load is None:
+            return np.random.randint(low=100,high=100001)
+        else:
+            return size_load
+
     def _create_microgrid(self):
         """
         Function used to create one microgrid. First selecting a load file, and a load size  and a randome architecture
@@ -391,26 +445,11 @@ class MicrogridGenerator:
         # get the sizing data
         # create microgrid object and append
         # return the list
-        rand = np.random.rand()
-        bin_genset = 0
-        bin_grid = 0
 
-        if rand <0.33:
-
-            bin_genset =1
-
-        elif rand>= 0.33 and rand <0.66:
-
-            bin_grid =1
-
-        else:
-
-            bin_genset=1
-            bin_grid=1
-
+        bin_genset, bin_grid = self._bin_genset_grid()
 
         architecture = {'PV':1, 'battery':1, 'genset':bin_genset, 'grid':bin_grid}
-        size_load = np.random.randint(low=100,high=100001)
+        size_load = self._size_load()
         load = self._scale_ts(self._get_load_ts(), size_load, scaling_method='max') #obtain dataframe of loads
         size = self._size_mg(load, size_load) #obtain a dictionary of mg sizing components
         column_actions=[]
@@ -500,7 +539,7 @@ class MicrogridGenerator:
             column_actions.append('grid_export')
             df_status['grid_status'] = [grid_ts.iloc[0,0]]
             #todo Switch back to random file to generate the new version of pymgrid25
-            grid_co2_ts = self._get_co2_ts() #pd.read_csv(self.path+'/data/co2/co2_caiso.csv') #
+            grid_co2_ts = self._get_co2_ts() 
             df_status['grid_co2'] = [grid_co2_ts.iloc[0, 0]]
 
             grid_price_import_ts = grid['grid_price_import']
