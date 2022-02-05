@@ -29,7 +29,7 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         self._grid_price_export_initial = self.mg._grid_price_export
         self._grid_status_ts_initial = self.mg._grid_status_ts
         self._grid_co2_initial = self.mg._grid_co2
-        self.set_timeseries(self, tsStarts[0], tsLength)
+        self.set_timeseries(tsStarts[0], tsLength)
         # setting the piece to be the main time series
 
         # State space
