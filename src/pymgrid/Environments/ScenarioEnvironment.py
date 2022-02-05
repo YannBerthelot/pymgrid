@@ -6,7 +6,7 @@ import gym
 
 
 class ScenarioEnvironment(pymgridEnvs.Environment):
-    def __init__(self, tsStartIndex, tsLength, env_config, seed=42):
+    def __init__(self, tsStarts, tsLength, env_config, seed=42):
         """
         Input
         int tsStartIndex -- start of the piece of time series
@@ -21,19 +21,9 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         # Microgrid
         self.env_config = env_config
         self.mg = env_config["microgrid"]
+        self.tsStarts = tsStarts
+        self.tsLength = tsLength
         # setting the piece to be the main time series
-        self.mg._pv_ts = self.mg._pv_ts[tsStartIndex : (tsStartIndex + tsLength)]
-        self.mg._load_ts = self.mg._load_ts[tsStartIndex : (tsStartIndex + tsLength)]
-        self.mg._grid_price_import = self.mg._grid_price_import[
-            tsStartIndex : (tsStartIndex + tsLength)
-        ]
-        self.mg._grid_price_export = self.mg._grid_price_export[
-            tsStartIndex : (tsStartIndex + tsLength)
-        ]
-        self.mg._grid_status_ts = self.mg._grid_status_ts[
-            tsStartIndex : (tsStartIndex + tsLength)
-        ]
-        self.mg._grid_co2 = self.mg._grid_co2[tsStartIndex : (tsStartIndex + tsLength)]
 
         # State space
 
@@ -80,6 +70,47 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
             assert self.observation_space.contains(self.state)
         except AssertionError:
             print("ERROR : INVALID STATE", self.state)
+
+    def set_timeseries(self, tsStartIndex, tsLength):
+        self.mg._pv_ts = self.mg._pv_ts[tsStartIndex : (tsStartIndex + tsLength)]
+        self.mg._load_ts = self.mg._load_ts[tsStartIndex : (tsStartIndex + tsLength)]
+        self.mg._grid_price_import = self.mg._grid_price_import[
+            tsStartIndex : (tsStartIndex + tsLength)
+        ]
+        self.mg._grid_price_export = self.mg._grid_price_export[
+            tsStartIndex : (tsStartIndex + tsLength)
+        ]
+        self.mg._grid_status_ts = self.mg._grid_status_ts[
+            tsStartIndex : (tsStartIndex + tsLength)
+        ]
+        self.mg._grid_co2 = self.mg._grid_co2[tsStartIndex : (tsStartIndex + tsLength)]
+
+    def reset(self, testing=False):
+        if "testing" in self.env_config:
+            testing = self.env_config["testing"]
+        self.round = 1
+        start = np.random.choice(self.tsStarts)
+        self.set_timeseries(start, self.tsLength)
+        # Reseting microgrid
+        self.mg.reset(testing=testing)
+        if testing == True:
+            self.TRAIN = False
+        elif self.resampling_on_reset == True:
+            Preprocessing.sample_reset(
+                self.mg.architecture["grid"] == 1,
+                self.saa,
+                self.mg,
+                sampling_args=sampling_args,
+            )
+
+        self.state, self.reward, self.done, self.info = (
+            self.transition(),
+            0,
+            False,
+            {},
+        )
+
+        return self.state
 
 
 class CSPLAScenarioEnvironment(ScenarioEnvironment):
