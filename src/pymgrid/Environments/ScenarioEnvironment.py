@@ -23,6 +23,13 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         self.mg = env_config["microgrid"]
         self.tsStarts = tsStarts
         self.tsLength = tsLength
+        self._pv_ts_initial = self.mg._pv_ts
+        self._load_ts_initial = self.mg._load_ts
+        self._grid_price_import_initial = self.mg._grid_price_import
+        self._grid_price_export_initial = self.mg._grid_price_export
+        self._grid_status_ts_initial = self.mg._grid_status_ts
+        self._grid_co2_initial = self.mg._grid_co2
+        self.set_timeseries(self, tsStarts[0], tsLength)
         # setting the piece to be the main time series
 
         # State space
@@ -72,18 +79,22 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
             print("ERROR : INVALID STATE", self.state)
 
     def set_timeseries(self, tsStartIndex, tsLength):
-        self.mg._pv_ts = self.mg._pv_ts[tsStartIndex : (tsStartIndex + tsLength)]
-        self.mg._load_ts = self.mg._load_ts[tsStartIndex : (tsStartIndex + tsLength)]
-        self.mg._grid_price_import = self.mg._grid_price_import[
+        self.mg._pv_ts = self._pv_ts_initial[tsStartIndex : (tsStartIndex + tsLength)]
+        self.mg._load_ts = self._load_ts_initial[
             tsStartIndex : (tsStartIndex + tsLength)
         ]
-        self.mg._grid_price_export = self.mg._grid_price_export[
+        self.mg._grid_price_import = self._grid_price_import_initial[
             tsStartIndex : (tsStartIndex + tsLength)
         ]
-        self.mg._grid_status_ts = self.mg._grid_status_ts[
+        self.mg._grid_price_export = self._grid_price_export_initial[
             tsStartIndex : (tsStartIndex + tsLength)
         ]
-        self.mg._grid_co2 = self.mg._grid_co2[tsStartIndex : (tsStartIndex + tsLength)]
+        self.mg._grid_status_ts = self._grid_status_ts_initial[
+            tsStartIndex : (tsStartIndex + tsLength)
+        ]
+        self.mg._grid_co2 = self._grid_co2_initial[
+            tsStartIndex : (tsStartIndex + tsLength)
+        ]
 
     def reset(self, testing=False):
         if "testing" in self.env_config:
