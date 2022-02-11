@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import pymgrid.Environments.Preprocessing as Preprocessing
 import gym
+from copy import copy
 
 
 class ScenarioEnvironment(pymgridEnvs.Environment):
@@ -20,7 +21,7 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
 
         # Microgrid
         self.env_config = env_config
-        self.mg = env_config["microgrid"]
+        self.mg = copy(env_config["microgrid"])
         self.tsStarts = tsStarts
         self.tsLength = tsLength
         self._pv_ts_initial = self.mg._pv_ts
@@ -149,63 +150,67 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": 0,
                 "grid_import": max(0, load - pv),
                 "grid_export": max(0, pv - load),
-                "pv": min(pv, load),
+                "pv": pv,
                 "genset": 0,
             },
             "store_excess": {  # 1
-                "battery_charge": max(0, pv - load),
+                "battery_charge": min(max(0, pv - load), capa_to_charge),
                 "battery_discharge": 0,
                 "grid_import": max(0, load - pv),
-                "grid_export": 0,
-                "pv": min(pv, load),
+                "grid_export": max(0, pv - capa_to_charge - load),
+                "pv": pv,
                 "genset": 0,
             },
             "fill_battery_from_grid": {  # 2
                 "battery_charge": capa_to_charge,
                 "battery_discharge": 0,
-                "grid_import": capa_to_charge + (load - pv),
-                "grid_export": 0,
-                "pv": min(pv, load),
+                "grid_import": max(0, capa_to_charge + load - pv),
+                "grid_export": max(0, pv - capa_to_charge - load),
+                "pv": pv,
                 "genset": 0,
             },
-            "fill_battery_from_genset": {  # 3
-                "battery_charge": capa_to_charge,
-                "battery_discharge": 0,
-                "grid_import": 0,
-                "grid_export": 0,
-                "pv": min(pv, load),
-                "genset": max(0, capa_to_charge + (load - pv)),
-            },
-            "buy_for_load": {  # 4
-                "battery_charge": 0,
-                "battery_discharge": 0,
-                "grid_import": max(0, load - pv),
-                "grid_export": 0,
-                "pv": min(pv, load),
-                "genset": 0,
-            },
-            "genset_for_load": {  # 5
-                "battery_charge": 0,
-                "battery_discharge": 0,
-                "grid_import": 0,
-                "grid_export": 0,
-                "pv": min(pv, load),
-                "genset": max(0, load - pv),
-            },
+            # "fill_battery_from_genset": {  # 3
+            #     "battery_charge": capa_to_charge,
+            #     "battery_discharge": 0,
+            #     "grid_import": 0,
+            #     "grid_export": 0,
+            #     "pv": pv,
+            #     "genset": max(0, capa_to_charge + (load - pv)),
+            # },
+            # "buy_for_load": {  # 4
+            #     "battery_charge": 0,
+            #     "battery_discharge": 0,
+            #     "grid_import": max(0, load - pv),
+            #     "grid_export": 0,
+            #     "pv": min(pv, load),
+            #     "genset": 0,
+            # },
+            # "genset_for_load": {  # 5
+            #     "battery_charge": 0,
+            #     "battery_discharge": 0,
+            #     "grid_import": 0,
+            #     "grid_export": 0,
+            #     "pv": min(pv, load),
+            #     "genset": max(0, load - pv),
+            # },
             "discharge_to_sell": {  # 6
                 "battery_charge": 0,
                 "battery_discharge": capa_to_discharge,
                 "grid_import": max(0, load - pv - capa_to_discharge),
-                "grid_export": max(0, capa_to_discharge + pv - load),
+                "grid_export": max(0, pv + capa_to_discharge - load),
                 "pv": pv,
                 "genset": 0,
             },
             "discharge_for_load": {  # 7
                 "battery_charge": 0,
-                "battery_discharge": min(capa_to_discharge, load - pv),
-                "grid_import": max(0, load - pv - capa_to_discharge),
-                "grid_export": 0,
-                "pv": min(pv, load),
+                "battery_discharge": min(capa_to_discharge, max(0, load - pv)),
+                "grid_import": max(
+                    0, load - pv - min(capa_to_discharge, max(0, load - pv))
+                ),
+                "grid_export": max(
+                    0, pv + min(capa_to_discharge, max(0, load - pv)) - load
+                ),
+                "pv": pv,
                 "genset": 0,
             },
         }
