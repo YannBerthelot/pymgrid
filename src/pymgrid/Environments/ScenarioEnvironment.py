@@ -135,7 +135,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
         )
         if self.mg.architecture["grid"] == 1 and self.mg.architecture["genset"] == 1:
             self.Na += 1
-        self.Na = 8
+        self.Na = 5
         self.action_space = gym.spaces.Discrete(self.Na)
 
     def micro_policy(self, action):
@@ -169,7 +169,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "pv": pv,
                 "genset": 0,
             },
-            # "fill_battery_from_genset": {  # 3
+            # "fill_battery_from_genset": {  # outdated
             #     "battery_charge": capa_to_charge,
             #     "battery_discharge": 0,
             #     "grid_import": 0,
@@ -177,7 +177,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
             #     "pv": pv,
             #     "genset": max(0, capa_to_charge + (load - pv)),
             # },
-            # "buy_for_load": {  # 4
+            # "buy_for_load": {  # outdated
             #     "battery_charge": 0,
             #     "battery_discharge": 0,
             #     "grid_import": max(0, load - pv),
@@ -185,7 +185,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
             #     "pv": min(pv, load),
             #     "genset": 0,
             # },
-            # "genset_for_load": {  # 5
+            # "genset_for_load": {  # outdated
             #     "battery_charge": 0,
             #     "battery_discharge": 0,
             #     "grid_import": 0,
@@ -193,7 +193,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
             #     "pv": min(pv, load),
             #     "genset": max(0, load - pv),
             # },
-            "discharge_to_sell": {  # 6
+            "discharge_to_sell": {  # 4
                 "battery_charge": 0,
                 "battery_discharge": capa_to_discharge,
                 "grid_import": max(0, load - pv - capa_to_discharge),
@@ -201,7 +201,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "pv": pv,
                 "genset": 0,
             },
-            "discharge_for_load": {  # 7
+            "discharge_for_load": {  # 5
                 "battery_charge": 0,
                 "battery_discharge": min(capa_to_discharge, max(0, load - pv)),
                 "grid_import": max(
