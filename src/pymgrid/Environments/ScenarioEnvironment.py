@@ -126,8 +126,8 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
 
 
 class CSPLAScenarioEnvironment(ScenarioEnvironment):
-    def __init__(self, tsStartIndex, tsLength, env_config, seed=42):
-        super().__init__(tsStartIndex, tsLength, env_config, seed)
+    def __init__(self, tsStartIndex, tsLength, env_config, pv_factor=1.0, seed=42):
+        super().__init__(tsStartIndex, tsLength, env_config, pv_factor, seed)
 
         # cspla action design
         self.Na = (
