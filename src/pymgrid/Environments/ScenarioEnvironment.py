@@ -126,17 +126,128 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
 
 
 class CSPLAScenarioEnvironment(ScenarioEnvironment):
-    def __init__(self, tsStartIndex, tsLength, env_config, pv_factor=1.0, seed=42):
+    def __init__(
+        self,
+        tsStartIndex,
+        tsLength,
+        env_config,
+        pv_factor=1.0,
+        action_design="large",
+        seed=42,
+    ):
         super().__init__(tsStartIndex, tsLength, env_config, pv_factor, seed)
 
         # cspla action design
+        self.action_design = action_design
         self.Na = (
             2 + self.mg.architecture["grid"] * 3 + self.mg.architecture["genset"] * 1
         )
         if self.mg.architecture["grid"] == 1 and self.mg.architecture["genset"] == 1:
             self.Na += 1
-        self.Na = 5
+        self.Na = 10
         self.action_space = gym.spaces.Discrete(self.Na)
+
+    def larger_micro_policy(self, action):
+        mg = self.mg
+        load = mg.load
+        pv = mg.pv
+        capa_to_charge = mg.battery.capa_to_charge
+        capa_to_discharge = mg.battery.capa_to_discharge
+        policies = {
+            "sell_excess": {  # 0
+                "battery_charge": 0,
+                "battery_discharge": 0,
+                "grid_import": max(0, load - pv),
+                "grid_export": max(0, pv - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "store_excess": {  # 1
+                "battery_charge": min(max(0, pv - load), capa_to_charge),
+                "battery_discharge": 0,
+                "grid_import": max(0, load - pv),
+                "grid_export": max(0, pv - capa_to_charge - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "fill_battery_from_grid": {  # 2
+                "battery_charge": capa_to_charge,
+                "battery_discharge": 0,
+                "grid_import": max(0, capa_to_charge + load - pv),
+                "grid_export": max(0, pv - capa_to_charge - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "fill_battery_from_grid": {  # 3
+                "battery_charge": capa_to_charge * 0.75,
+                "battery_discharge": 0,
+                "grid_import": max(0, (capa_to_charge * 0.75) + load - pv),
+                "grid_export": max(0, pv - (capa_to_charge * 0.75) - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "fill_battery_from_grid": {  # 4
+                "battery_charge": capa_to_charge * 0.50,
+                "battery_discharge": 0,
+                "grid_import": max(0, (capa_to_charge * 0.5) + load - pv),
+                "grid_export": max(0, pv - (capa_to_charge * 0.5) - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "fill_battery_from_grid": {  # 5
+                "battery_charge": capa_to_charge * 0.25,
+                "battery_discharge": 0,
+                "grid_import": max(0, (capa_to_charge * 0.25) + load - pv),
+                "grid_export": max(0, pv - (capa_to_charge * 0.25) - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "discharge_to_sell": {  # 6
+                "battery_charge": 0,
+                "battery_discharge": capa_to_discharge,
+                "grid_import": max(0, load - pv - capa_to_discharge),
+                "grid_export": max(0, pv + capa_to_discharge - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "discharge_to_sell": {  # 7
+                "battery_charge": 0,
+                "battery_discharge": capa_to_discharge * 0.75,
+                "grid_import": max(0, load - pv - (capa_to_discharge * 0.75)),
+                "grid_export": max(0, pv + (capa_to_discharge * 0.75) - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "discharge_to_sell": {  # 8
+                "battery_charge": 0,
+                "battery_discharge": capa_to_discharge * 0.5,
+                "grid_import": max(0, load - pv - (capa_to_discharge * 0.5)),
+                "grid_export": max(0, pv + (capa_to_discharge * 0.5) - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "discharge_to_sell": {  # 9
+                "battery_charge": 0,
+                "battery_discharge": capa_to_discharge * 0.25,
+                "grid_import": max(0, load - pv - (capa_to_discharge * 0.25)),
+                "grid_export": max(0, pv + (capa_to_discharge * 0.25) - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "discharge_for_load": {  # 10
+                "battery_charge": 0,
+                "battery_discharge": min(capa_to_discharge, max(0, load - pv)),
+                "grid_import": max(
+                    0, load - pv - min(capa_to_discharge, max(0, load - pv))
+                ),
+                "grid_export": max(
+                    0, pv + min(capa_to_discharge, max(0, load - pv)) - load
+                ),
+                "pv": pv,
+                "genset": 0,
+            },
+        }
+        return policies[list(set(policies.keys()))[action]]
 
     def micro_policy(self, action):
         mg = self.mg
@@ -193,7 +304,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
             #     "pv": min(pv, load),
             #     "genset": max(0, load - pv),
             # },
-            "discharge_to_sell": {  # 4
+            "discharge_to_sell": {  # 3
                 "battery_charge": 0,
                 "battery_discharge": capa_to_discharge,
                 "grid_import": max(0, load - pv - capa_to_discharge),
@@ -201,7 +312,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "pv": pv,
                 "genset": 0,
             },
-            "discharge_for_load": {  # 5
+            "discharge_for_load": {  # 4
                 "battery_charge": 0,
                 "battery_discharge": min(capa_to_discharge, max(0, load - pv)),
                 "grid_import": max(
@@ -220,4 +331,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
         """
         CSPLA action design
         """
-        return self.micro_policy(action)
+        if self.action_design == "large":
+            return self.larger_micro_policy(action)
+        else:
+            return self.micro_policy(action)
