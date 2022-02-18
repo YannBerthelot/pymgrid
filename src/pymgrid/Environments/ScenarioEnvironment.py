@@ -178,7 +178,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "pv": pv,
                 "genset": 0,
             },
-            "fill_battery_from_grid": {  # 3
+            "fill_battery_from_grid_75": {  # 3
                 "battery_charge": capa_to_charge * 0.75,
                 "battery_discharge": 0,
                 "grid_import": max(0, (capa_to_charge * 0.75) + load - pv),
@@ -186,7 +186,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "pv": pv,
                 "genset": 0,
             },
-            "fill_battery_from_grid": {  # 4
+            "fill_battery_from_grid_50": {  # 4
                 "battery_charge": capa_to_charge * 0.50,
                 "battery_discharge": 0,
                 "grid_import": max(0, (capa_to_charge * 0.5) + load - pv),
@@ -194,7 +194,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "pv": pv,
                 "genset": 0,
             },
-            "fill_battery_from_grid": {  # 5
+            "fill_battery_from_grid_25": {  # 5
                 "battery_charge": capa_to_charge * 0.25,
                 "battery_discharge": 0,
                 "grid_import": max(0, (capa_to_charge * 0.25) + load - pv),
@@ -210,7 +210,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "pv": pv,
                 "genset": 0,
             },
-            "discharge_to_sell": {  # 7
+            "discharge_to_sell_75": {  # 7
                 "battery_charge": 0,
                 "battery_discharge": capa_to_discharge * 0.75,
                 "grid_import": max(0, load - pv - (capa_to_discharge * 0.75)),
@@ -218,7 +218,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "pv": pv,
                 "genset": 0,
             },
-            "discharge_to_sell": {  # 8
+            "discharge_to_sell_50": {  # 8
                 "battery_charge": 0,
                 "battery_discharge": capa_to_discharge * 0.5,
                 "grid_import": max(0, load - pv - (capa_to_discharge * 0.5)),
@@ -226,7 +226,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "pv": pv,
                 "genset": 0,
             },
-            "discharge_to_sell": {  # 9
+            "discharge_to_sell_25": {  # 9
                 "battery_charge": 0,
                 "battery_discharge": capa_to_discharge * 0.25,
                 "grid_import": max(0, load - pv - (capa_to_discharge * 0.25)),
