@@ -144,7 +144,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
         )
         if self.mg.architecture["grid"] == 1 and self.mg.architecture["genset"] == 1:
             self.Na += 1
-        self.Na = 10
+        self.Na = 11
         self.action_space = gym.spaces.Discrete(self.Na)
 
     def larger_micro_policy(self, action):
