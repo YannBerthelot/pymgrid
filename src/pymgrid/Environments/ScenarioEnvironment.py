@@ -158,100 +158,123 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
         p_charge_max = mg.battery.p_charge_max
         p_discharge_max = mg.battery.p_discharge_max
         p_discharge = max(0, min(net_load, capa_to_discharge, p_discharge_max))
-        p_charge = max(0, min(net_load, capa_to_charge, p_charge_max))
+        p_charge = max(0, min(excess, capa_to_charge, p_charge_max))
         p_charge_sup = min(capa_to_charge, p_charge_max)
         p_discharge_sup = min(capa_to_discharge, p_discharge_max)
         policies = {
-            "sell_excess": {  # 0
+            0: {  # sell_excess
                 "battery_charge": 0,
                 "battery_discharge": 0,
                 "grid_import": max(0, net_load),
                 "grid_export": max(0, excess),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
-            "store_excess": {  # 1
+            1: {  # store_excess
                 "battery_charge": p_charge,
                 "battery_discharge": 0,
                 "grid_import": max(0, net_load),
                 "grid_export": max(0, excess - p_charge),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
-            "fill_battery_from_grid": {  # 2
+            2: {  # fill_battery_from_grid
                 "battery_charge": p_charge_sup,
                 "battery_discharge": 0,
                 "grid_import": max(0, p_charge_sup + net_load),
                 "grid_export": max(0, excess - p_charge_sup),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
-            "fill_battery_from_grid_75": {  # 3
+            3: {  # fill_battery_from_grid_75
                 "battery_charge": p_charge_sup * 0.75,
                 "battery_discharge": 0,
                 "grid_import": max(0, (p_charge_sup * 0.75) + net_load),
                 "grid_export": max(0, excess - (p_charge_sup * 0.75)),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
-            "fill_battery_from_grid_50": {  # 4
+            4: {  # fill_battery_from_grid_50
                 "battery_charge": p_charge * 0.5,
                 "battery_discharge": 0,
                 "grid_import": max(0, (p_charge * 0.5) + net_load),
                 "grid_export": max(0, excess - (p_charge * 0.5)),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
-            "fill_battery_from_grid_25": {  # 5
+            5: {  # fill_battery_from_grid_25
                 "battery_charge": p_charge_sup * 0.25,
                 "battery_discharge": 0,
                 "grid_import": max(0, (p_charge_sup * 0.25) + net_load),
                 "grid_export": max(0, excess - (p_charge_sup * 0.25)),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
-            "discharge_to_sell": {  # 6
+            6: {  # discharge_to_sell
                 "battery_charge": 0,
                 "battery_discharge": p_discharge_sup,
                 "grid_import": max(0, net_load - p_discharge_sup),
                 "grid_export": max(0, excess + p_discharge_sup),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
-            "discharge_to_sell_75": {  # 7
+            7: {  # discharge_to_sell_75
                 "battery_charge": 0,
                 "battery_discharge": p_discharge_sup * 0.75,
                 "grid_import": max(0, net_load - (p_discharge_sup * 0.75)),
                 "grid_export": max(0, excess + (p_discharge_sup * 0.75)),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
-            "discharge_to_sell_50": {  # 8
+            8: {  # discharge_to_sell_50
                 "battery_charge": 0,
                 "battery_discharge": p_discharge_sup * 0.5,
                 "grid_import": max(0, net_load - (p_discharge_sup * 0.5)),
                 "grid_export": max(0, excess + (p_discharge_sup * 0.5)),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
-            "discharge_to_sell_25": {  # 9
+            9: {  # discharge_to_sell_25
                 "battery_charge": 0,
                 "battery_discharge": p_discharge_sup * 0.25,
                 "grid_import": max(0, net_load - (p_discharge_sup * 0.25)),
                 "grid_export": max(0, excess + (p_discharge_sup * 0.25)),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
-            "discharge_for_load": {  # 10
+            10: {  # discharge_for_load
                 "battery_charge": 0,
                 "battery_discharge": p_discharge,
                 "grid_import": max(0, net_load - p_discharge),
                 "grid_export": max(0, excess),
                 "pv": pv,
+                "pv_consummed": pv,
+                "pv_curtailed": 0,
                 "genset": 0,
             },
         }
-        return policies[list(set(policies.keys()))[action]]
+
+        return policies[action]
 
     def micro_policy(self, action):
         mg = self.mg
