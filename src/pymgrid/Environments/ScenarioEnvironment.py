@@ -167,9 +167,9 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": 0,
                 "grid_import": max(0, net_load),
                 "grid_export": max(0, excess),
-                "pv": pv,
+                # "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                # "pv_curtailed": 0.0,
                 "genset": 0,
             },
             1: {  # store_excess
@@ -177,9 +177,9 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": 0,
                 "grid_import": max(0, net_load),
                 "grid_export": max(0, excess - p_charge),
-                "pv": pv,
+                # "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                # "pv_curtailed": 0.0,
                 "genset": 0,
             },
             2: {  # fill_battery_from_grid
@@ -187,9 +187,9 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": 0,
                 "grid_import": max(0, p_charge_sup + net_load),
                 "grid_export": max(0, excess - p_charge_sup),
-                "pv": pv,
+                # "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                # "pv_curtailed": 0.0,
                 "genset": 0,
             },
             3: {  # fill_battery_from_grid_75
@@ -199,7 +199,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "grid_export": max(0, excess - (p_charge_sup * 0.75)),
                 "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                "pv_curtailed": 0.0,
                 "genset": 0,
             },
             4: {  # fill_battery_from_grid_50
@@ -207,9 +207,9 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": 0,
                 "grid_import": max(0, (p_charge * 0.5) + net_load),
                 "grid_export": max(0, excess - (p_charge * 0.5)),
-                "pv": pv,
+                # "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                # "pv_curtailed": 0.0,
                 "genset": 0,
             },
             5: {  # fill_battery_from_grid_25
@@ -217,9 +217,9 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": 0,
                 "grid_import": max(0, (p_charge_sup * 0.25) + net_load),
                 "grid_export": max(0, excess - (p_charge_sup * 0.25)),
-                "pv": pv,
+                # "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                # "pv_curtailed": 0.0,
                 "genset": 0,
             },
             6: {  # discharge_to_sell
@@ -227,9 +227,9 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": p_discharge_sup,
                 "grid_import": max(0, net_load - p_discharge_sup),
                 "grid_export": max(0, excess + p_discharge_sup),
-                "pv": pv,
+                # "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                # "pv_curtailed": 0.0,
                 "genset": 0,
             },
             7: {  # discharge_to_sell_75
@@ -237,9 +237,9 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": p_discharge_sup * 0.75,
                 "grid_import": max(0, net_load - (p_discharge_sup * 0.75)),
                 "grid_export": max(0, excess + (p_discharge_sup * 0.75)),
-                "pv": pv,
+                # "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                # "pv_curtailed": 0.0,
                 "genset": 0,
             },
             8: {  # discharge_to_sell_50
@@ -247,9 +247,9 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": p_discharge_sup * 0.5,
                 "grid_import": max(0, net_load - (p_discharge_sup * 0.5)),
                 "grid_export": max(0, excess + (p_discharge_sup * 0.5)),
-                "pv": pv,
+                # "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                # "pv_curtailed": 0.0,
                 "genset": 0,
             },
             9: {  # discharge_to_sell_25
@@ -257,9 +257,9 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": p_discharge_sup * 0.25,
                 "grid_import": max(0, net_load - (p_discharge_sup * 0.25)),
                 "grid_export": max(0, excess + (p_discharge_sup * 0.25)),
-                "pv": pv,
+                # "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                # "pv_curtailed": 0.0,
                 "genset": 0,
             },
             10: {  # discharge_for_load
@@ -267,13 +267,13 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
                 "battery_discharge": p_discharge,
                 "grid_import": max(0, net_load - p_discharge),
                 "grid_export": max(0, excess),
-                "pv": pv,
+                # "pv": pv,
                 "pv_consummed": pv,
-                "pv_curtailed": 0,
+                # "pv_curtailed": 0.0,
                 "genset": 0,
             },
         }
-
+        # print(policies[action])
         return policies[action]
 
     def micro_policy(self, action):
