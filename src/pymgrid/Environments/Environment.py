@@ -221,7 +221,6 @@ class Environment(gym.Env):
         )  # the hour is already divided by 24 in the line above
         updated_values["hour_cos"] = np.cos(2 * np.pi * updated_values["hour"])
         updated_values.pop("hour", None)
-
         s_ = np.array(list(updated_values.values()))
         # np.array(self.mg.get_updated_values().values)#.astype(np.float)#self.mg.get_updated_values()
         # s_ = [ s_[key] for key in s_.keys()]
