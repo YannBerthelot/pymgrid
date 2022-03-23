@@ -148,7 +148,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
         )
         if self.mg.architecture["grid"] == 1 and self.mg.architecture["genset"] == 1:
             self.Na += 1
-        self.Na = 6
+        self.Na = Na
         self.action_space = gym.spaces.Discrete(self.Na)
 
     def larger_micro_policy_failsafe(self, action):
@@ -514,7 +514,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
         CSPLA action design
         """
         if self.action_design == "large":
-            return self.larger_micro_policy(action)
+            return self.larger_micro_policy_failsafe(action)
         elif self.action_design == "rule-based":
             return self.rule_based(self.mode)
         else:
