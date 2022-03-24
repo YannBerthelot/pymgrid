@@ -517,5 +517,7 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
             return self.larger_micro_policy_failsafe(action)
         elif self.action_design == "rule-based":
             return self.rule_based(self.mode)
+        elif self.action_design == "original":
+            return self.get_action_priority_list(action)
         else:
             return self.micro_policy(action)
