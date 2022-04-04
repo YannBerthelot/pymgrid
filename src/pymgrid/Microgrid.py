@@ -47,6 +47,7 @@ if in_ipynb():
     init_notebook_mode(connected=False)
 
 np.random.seed(123)
+
 #cf.set_config_file(offline=True, theme='pearl') #commented for now, issues with parallel processes
 
 DEFAULT_HORIZON = 24 #in hours
@@ -345,15 +346,13 @@ class Microgrid:
     """
 
     def __init__(self, parameters, horizon=DEFAULT_HORIZON, timestep=DEFAULT_TIMESTEP):
-
         #list of parameters
         #this is a static dataframe: parameters of the microgrid that do not change with time
 
         #self._param_check(parameters)
 
         self.parameters = parameters['parameters']
-        self.architecture =  parameters['architecture']
-
+        self.architecture = parameters['architecture']
         #different timeseries
         self._load_ts=parameters['load']
         self._pv_ts=parameters['pv']
@@ -408,7 +407,7 @@ class Microgrid:
                              self._grid_price_export.iloc[0, 0],
                              self._grid_co2.iloc[0, 0])
 
-    def _param_check(self,parameters):
+    def _param_check(self, parameters):
         """Simple parameter checks"""
 
         # Check parameters
@@ -482,7 +481,7 @@ class Microgrid:
 
     def get_cost(self):
         """ Function that returns the cost associated the operation of the last time step. """
-        return self._df_record_cost['cost'][-1]
+        return self._df_record_cost['total_cost'][-1]
 
     def get_co2(self):
         """ Function that returns the co2 emissions associated to the operation of the last time step. """
@@ -896,7 +895,7 @@ class Microgrid:
                 (self.parameters['battery_soc_max'].values[0] * self.parameters['battery_capacity'].values[0] -
                  new_soc *
                  self.parameters['battery_capacity'].values[0]
-                 ) / self.parameters['battery_efficiency'].values[0], 0)
+                 ) * self.parameters['battery_efficiency'].values[0], 0)
 
             capa_to_discharge = max((new_soc *
                                      self.parameters['battery_capacity'].values[0]
@@ -972,14 +971,12 @@ class Microgrid:
 
         if p_charge > self._zero and p_discharge > self._zero:
             pass
-            #print ('cannot import and export at the same time')
-            #todo how to deal with that?
 
         capa_to_charge = max(
                         (self.parameters['battery_soc_max'].values[0] * self.parameters['battery_capacity'].values[0] -
                          status['battery_soc'][-1] *
                          self.parameters['battery_capacity'].values[0]
-                         ) / self.parameters['battery_efficiency'].values[0], 0)
+                         ) * self.parameters['battery_efficiency'].values[0], 0)
 
         capa_to_discharge = max((status['battery_soc'][-1] *
                                  self.parameters['battery_capacity'].values[0]
@@ -996,7 +993,7 @@ class Microgrid:
 
         return p_charge, p_discharge
 
-    def _record_production(self, control_dict, df, status):
+    def _record_production(self, control_dict, production_dict, status):
         """
         This function records the actual production occuring in the microgrid. Based on the control actions and the
         parameters of the microgrid. This function will check that the control actions respect the constraints of
@@ -1015,128 +1012,79 @@ class Microgrid:
         -----
         The mechanism to incure a penalty in case of over-generation is not yet in its final version.
         """
-
-        #todo enforce constraints
-        #todo make sure the control actions repect their respective constriants
-
-        #todo pv
-
-        if not isinstance(df, dict):
-            raise TypeError('We know this should be named differently but df needs to be dict, is {}'.format(type(df)))
-
-        total_load = 0
-        total_production = 0
-        threshold = 0.001
-        total_load = control_dict['load']
-        temp_pv = 0
-
-        #check the generator constraints
-
-
-
+        assert isinstance(production_dict, dict)
         try:
-            total_production += control_dict['loss_load']
-        except:
-            control_dict['loss_load'] =0
-        try:
-            total_production += control_dict['overgeneration']
-        except:
-            control_dict['overgeneration'] = 0
-
-        if self.architecture['PV'] == 1:
-            try:
-                total_production += control_dict['pv']
-                control_dict['pv_consummed'] = max(0,min(control_dict['pv_consummed'], control_dict['pv']))
-                temp_pv += max(control_dict['pv_consummed'], control_dict['pv'])
-
-            except:
-                control_dict['pv_consummed'] = 0
-
-            try:
-                if control_dict['pv_curtailed'] <0:
-                    control_dict['pv_curtailed'] = 0
-                total_production -= control_dict['pv_curtailed']
-            except:
-                control_dict['pv_curtailed'] = 0
-                control_dict['pv_curtailed'] = control_dict['pv'] - control_dict['pv_consummed']
-                total_production -= control_dict['pv_curtailed']
-
-        if self.architecture['genset'] == 1:
-            try:
-                p_genset = control_dict['genset']
-            except:
-                p_genset = 0
-                print("this microgrid has a genset, you should add a 'genset' field to your control dictionnary")
-
-            control_dict['genset'] = self._check_constraints_genset(p_genset)
-            total_production += control_dict['genset']
-
-        if self.architecture['grid'] == 1:
-            try:
-                p_import = control_dict['grid_import']
-                p_export = control_dict['grid_export']
-            except:
-                p_import = 0
-                p_export = 0
-                print("this microgrid is grid connected, you should add a 'grid_import' and a 'grid_export' field to your control dictionnary")
-
-            p_import, p_export = self._check_constraints_grid(p_import, p_export)
-
-            control_dict['grid_import'] = p_import * status['grid_status'][-1]
-            control_dict['grid_export'] = p_export * status['grid_status'][-1]
-
-            total_production += control_dict['grid_import']
-            total_production -= control_dict['grid_export']
-
-        if self.architecture['battery'] == 1:
-
-            try:
-                p_charge=control_dict['battery_charge']
-                p_discharge=control_dict['battery_discharge']
-
-            except:
-                p_charge = 0
-                p_discharge = 0
-                print(
-                    "this microgrid is grid connected, you should add a 'battery_charge' and a 'battery_discharge' field to your control dictionnary")
+            control_dict.pop('pv_consummed')
+        except KeyError:
+            pass
 
 
-            p_charge, p_discharge = self._check_constraints_battery(p_charge,
-                                                                   p_discharge,
-                                                                   status)
-            control_dict['battery_discharge'] = p_discharge
-            control_dict['battery_charge'] = p_charge
+        has_grid = self.architecture['grid'] == 1
+        has_genset = self.architecture['genset'] == 1
+        has_battery = self.architecture['battery'] == 1
 
-            total_production += control_dict['battery_discharge']
-            total_production -= control_dict['battery_charge']
+        sources = 0.0
+        sinks = control_dict['load']
 
-        if abs(total_production - total_load) < threshold:
-            control_dict['overgeneration'] =0
-            control_dict['loss_load'] = 0
-            for j in df:
-                df[j].append(control_dict[j])
+        # Battery
+        if has_battery:
+            p_charge, p_discharge = self._check_constraints_battery(control_dict['battery_charge'],
+                                                                    control_dict['battery_discharge'],
+                                                                    status)
+            production_dict['battery_charge'].append(p_charge)
+            production_dict['battery_discharge'].append(p_discharge)
 
-        elif total_production > total_load :
-            # here we consider we produced more than needed ? we pay the price of the full cost proposed?
-            # penalties ?
-            control_dict['overgeneration'] = total_production-total_load
-            control_dict['loss_load'] = 0
-            for j in df:
-                df[j].append(control_dict[j])
-            #df = df.append(control_dict, ignore_index=True)
-            #print('total_production > total_load')
-            #print(control_dict)
+            sources += p_discharge
+            sinks += p_charge
 
-        elif total_production < total_load :
-            control_dict['loss_load']+= total_load-total_production
-            control_dict['overgeneration'] = 0
-            for j in df:
-                df[j].append(control_dict[j])
-            #df = df.append(control_dict, ignore_index=True)
-            #print('total_production < total_load')
-            #print(control_dict)
+        if has_grid:
+            p_import, p_export = self._check_constraints_grid(control_dict['grid_import'],
+                                                                    control_dict['grid_export'])
+            production_dict['grid_import'].append(p_import)
+            production_dict['grid_export'].append(p_export)
 
-        return df
+            sources += p_import
+            sinks += p_export
+
+        if has_genset:
+            p_genset = self._check_constraints_genset(control_dict['genset'])
+            production_dict['genset'].append(p_genset)
+            sources += p_genset
+
+        pv_required = sinks-sources
+        pv_available = control_dict['pv']
+
+        if np.abs(pv_required-pv_available) < 1e-3:         # meeting demand
+            pv_consumed = pv_available
+            loss_load = 0
+            pv_curtailed = 0
+            overgeneration = 0
+
+        elif pv_required > pv_available:                    # loss load
+            pv_consumed = pv_available
+            loss_load = pv_required-pv_available
+            pv_curtailed = 0
+            overgeneration = 0
+
+        elif 0 < pv_required < pv_available:                # curtail pv
+            pv_consumed = pv_required
+            loss_load = 0
+            pv_curtailed = pv_available-pv_required
+            overgeneration = 0
+
+        else:                                               # overgeneration. Requires NO pv whatsoever
+            assert pv_required < 0
+            pv_consumed = 0
+            loss_load = 0
+            pv_curtailed = pv_available if pv_available > 0 else 0
+            overgeneration = -pv_required
+
+        production_dict['pv_consummed'].append(pv_consumed)
+        production_dict['loss_load'].append(loss_load)
+        production_dict['pv_curtailed'].append(pv_curtailed)
+        production_dict['overgeneration'].append(overgeneration)
+
+        return production_dict
 
     def _record_co2(self, control_dict, df, grid_co2=0):
         """ This function record the cost of operating the microgrid at each time step."""
@@ -1154,34 +1102,41 @@ class Microgrid:
 
         return df
 
-
     def _record_cost(self, control_dict, df, df_co2, cost_import=0, cost_export=0):
         """ This function record the cost of operating the microgrid at each time step."""
 
         if not isinstance(df, dict):
             raise TypeError('We know this should be named differently but df needs to be dict, is {}'.format(type(df)))
 
-        cost = 0
-        cost += control_dict['loss_load'] * self.parameters['cost_loss_load'].values[0]
-        cost += control_dict['overgeneration'] * self.parameters['cost_overgeneration'].values[0]
+        cost_loss_load = control_dict['loss_load'] * self.parameters['cost_loss_load'].values[0]
+        cost_overgeneration = control_dict['overgeneration'] * self.parameters['cost_overgeneration'].values[0]
+
+        df['loss_load'].append(cost_loss_load)
+        df['overgeneration'].append(cost_overgeneration)
+
+        # cost += control_dict['loss_load'] * self.parameters['cost_loss_load'].values[0]
+        # cost += control_dict['overgeneration'] * self.parameters['cost_overgeneration'].values[0]
 
         if self.architecture['genset'] == 1:
-            cost += control_dict['genset'] * self.parameters['fuel_cost'].values[0]
+            genset_cost = control_dict['genset'] * self.parameters['fuel_cost'].values[0]
+            df['genset'].append(genset_cost)
 
         if self.architecture['grid'] ==1:
-
-
-            cost +=( cost_import * control_dict['grid_import']
-                     - cost_export * control_dict['grid_export'])
+            grid_import_cost = cost_import * control_dict['grid_import']
+            grid_export_cost = - cost_export * control_dict['grid_export']
+            df['grid_import'].append(grid_import_cost)
+            df['grid_export'].append(grid_export_cost)
 
 
         if self.architecture['battery'] ==1 :
-            cost += (control_dict['battery_charge']+control_dict['battery_discharge'])*self.parameters['battery_cost_cycle'].values[0]
+            battery_cost = (control_dict['battery_charge']+control_dict['battery_discharge'])*self.parameters['battery_cost_cycle'].values[0]
+            df['battery'].append(battery_cost)
 
-        cost += self.parameters['cost_co2'].values[0] * df_co2['co2'][-1]
-        cost_dict= {'cost': cost}
+        co2_cost = self.parameters['cost_co2'].values[0] * df_co2['co2'][-1]
+        df['co2'].append(co2_cost)
 
-        df['cost'].append(cost)
+        total_cost = np.sum([val[-1] for key, val in df.items() if key != 'total_cost'])
+        df['total_cost'].append(total_cost)
 
         return df
 
