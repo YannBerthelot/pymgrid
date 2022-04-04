@@ -805,8 +805,7 @@ class ModelPredictiveControl:
                         e_max, e_min, p_max_charge, p_max_discharge,
                         p_max_import, p_max_export, soc_0, p_genset_max, cost_co2, grid_co2, genset_co2,)
             
-        self.problem.solve(warm_start = True)
-
+        self.problem.solve(warm_start=True)
 
         if self.problem.status == 'infeasible':
             print(self.problem.status)
@@ -1055,7 +1054,7 @@ class ModelPredictiveControl:
         """
 
         sample = return_underlying_data(self.microgrid)
-
+        sample = sample.reset_index(drop=True)
         return self.run_mpc_on_sample(sample, forecast_steps=forecast_steps, verbose=verbose)
 
     def mpc_single_step(self, sample, previous_output, current_step):
@@ -1300,8 +1299,8 @@ class RuleBasedControl:
         baseline_priority_list_cost = deepcopy(self.microgrid._df_record_cost)
         baseline_priority_list_co2 = deepcopy(self.microgrid._df_record_co2)
 
-        if length is None:
-            length = self.microgrid._data_length
+        if length is None or length >= self.microgrid._data_length:
+            length = self.microgrid._data_length-1
 
         n = length - self.microgrid.horizon
         print_ratio = n/100
