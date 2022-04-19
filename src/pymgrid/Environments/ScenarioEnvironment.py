@@ -12,8 +12,8 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         int tsStartIndex -- start of the piece of time series
         int tsLength -- length of the piece of the time series to extract starting from tsStartIndex
         dict envConfig -- pymgridEnvs.Environment native dictionary for config
-        float[][] customPVTS  --  (T,)-shaped np.array representing pv time series (if None, the native time series is used)  
-        float[][] customLoadTS   --  (T,)-shaped np.array representing load time series (if None, the native time series is used)
+        float[][] customPVTS  --  (T,1)-shaped np.array representing pv time series (if None, the native time series is used)  
+        float[][] customLoadTS   --  (T,1)-shaped np.array representing load time series (if None, the native time series is used)
         """
         # Set seed
         np.random.seed(seed)
