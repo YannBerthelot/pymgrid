@@ -6,12 +6,14 @@ import gym
 
 
 class ScenarioEnvironment(pymgridEnvs.Environment):
-    def __init__(self, tsStartIndex, tsLength, env_config, seed=42):
+    def __init__(self, tsStartIndex, tsLength, env_config, customPVTs=None, customLoadTs=None, seed=42):
         """
         Input
         int tsStartIndex -- start of the piece of time series
         int tsLength -- length of the piece of the time series to extract starting from tsStartIndex
         dict envConfig -- pymgridEnvs.Environment native dictionary for config
+        float[][] customPVTS  --  (T,)-shaped np.array representing pv time series (if None, the native time series is used)  
+        float[][] customLoadTS   --  (T,)-shaped np.array representing load time series (if None, the native time series is used)
         """
         # Set seed
         np.random.seed(seed)
@@ -22,6 +24,11 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         self.env_config = env_config
         self.mg = env_config["microgrid"]
         # setting the piece to be the main time series
+
+        if not (customPVTs is None or customLoadTs is None):
+            self.mg._load_ts  = pd.DataFrame(customLoadTs, columns = ["Electricity:Facility [kW](Hourly)"])
+            self.mg._pv_ts = pd.DataFrame(customPVTs, columns = ["GH illum (lx)"])
+
         self.mg._pv_ts = self.mg._pv_ts[tsStartIndex : (tsStartIndex + tsLength)]
         self.mg._load_ts = self.mg._load_ts[tsStartIndex : (tsStartIndex + tsLength)]
         self.mg._grid_price_import = self.mg._grid_price_import[
@@ -83,8 +90,8 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
 
 
 class CSPLAScenarioEnvironment(ScenarioEnvironment):
-    def __init__(self, tsStartIndex, tsLength, env_config, seed=42):
-        super().__init__(tsStartIndex, tsLength, env_config, seed)
+    def __init__(self, tsStartIndex, tsLength, env_config, customPVTs=None, customLoadTs=None, seed=42):
+        super().__init__(tsStartIndex, tsLength, env_config, customPVTs, customLoadTs, seed)
 
         # cspla action design
         self.Na = (
