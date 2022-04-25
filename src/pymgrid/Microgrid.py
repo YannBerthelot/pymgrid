@@ -1202,7 +1202,6 @@ class Microgrid:
         This function records the actual production occuring in the microgrid. Based on the control actions and the
         parameters of the microgrid. This function will check that the control actions respect the constraints of
         the microgrid and then record what generators have produced energy.
-
         Parameters
         ----------
         control_dict : dictionnary
@@ -1211,141 +1210,15 @@ class Microgrid:
             Previous version of the record_production dataframe (coming from the run loop, or benchmarks).
         status: dataframe
             One line dataframe representing the changing parameters of the microgrid.
-
         Notes
         -----
         The mechanism to incure a penalty in case of over-generation is not yet in its final version.
         """
-
-        # todo enforce constraints
-        # todo make sure the control actions repect their respective constriants
-
-        # todo pv
-
-        if not isinstance(df, dict):
-            raise TypeError(
-                "We know this should be named differently but df needs to be dict, is {}".format(
-                    type(df)
-                )
-            )
-
-        total_load = 0
-        total_production = 0
-        threshold = 0.001
-        total_load = control_dict["load"]
-        temp_pv = 0
-
-        # check the generator constraints
-
+        assert isinstance(production_dict, dict)
         try:
-            total_production += control_dict["loss_load"]
-        except:
-            control_dict["loss_load"] = 0
-        try:
-            total_production += control_dict["overgeneration"]
-        except:
-            control_dict["overgeneration"] = 0
-
-        if self.architecture["PV"] == 1:
-            # print("pv_consummed", control_dict['pv_consummed'])
-            try:
-                total_production += control_dict["pv"]
-                control_dict["pv_consummed"] = max(
-                    0, min(control_dict["pv_consummed"], control_dict["pv"])
-                )
-                temp_pv += max(control_dict["pv_consummed"], control_dict["pv"])
-
-            except:
-                control_dict["pv_consummed"] = 0
-            try:
-                if control_dict["pv_curtailed"] < 0:
-                    control_dict["pv_curtailed"] = 0
-                total_production -= control_dict["pv_curtailed"]
-            except:
-                control_dict["pv_curtailed"] = 0
-                control_dict["pv_curtailed"] = (
-                    control_dict["pv"] - control_dict["pv_consummed"]
-                )
-                total_production -= control_dict["pv_curtailed"]
-
-        if self.architecture["genset"] == 1:
-            try:
-                p_genset = control_dict["genset"]
-            except:
-                p_genset = 0
-                print(
-                    "this microgrid has a genset, you should add a 'genset' field to your control dictionnary"
-                )
-
-            control_dict["genset"] = self._check_constraints_genset(p_genset)
-            total_production += control_dict["genset"]
-
-        if self.architecture["grid"] == 1:
-            try:
-                p_import = control_dict["grid_import"]
-                p_export = control_dict["grid_export"]
-            except:
-                p_import = 0
-                p_export = 0
-                print(
-                    "this microgrid is grid connected, you should add a 'grid_import' and a 'grid_export' field to your control dictionnary"
-                )
-
-            p_import, p_export = self._check_constraints_grid(p_import, p_export)
-
-            control_dict["grid_import"] = p_import * status["grid_status"][-1]
-            control_dict["grid_export"] = p_export * status["grid_status"][-1]
-
-            total_production += control_dict["grid_import"]
-            total_production -= control_dict["grid_export"]
-
-        if self.architecture["battery"] == 1:
-
-            try:
-                p_charge = control_dict["battery_charge"]
-                p_discharge = control_dict["battery_discharge"]
-
-            except:
-                p_charge = 0
-                p_discharge = 0
-                print(
-                    "this microgrid is grid connected, you should add a 'battery_charge' and a 'battery_discharge' field to your control dictionnary"
-                )
-
-            p_charge, p_discharge = self._check_constraints_battery(
-                p_charge, p_discharge, status
-            )
-            control_dict["battery_discharge"] = p_discharge
-            control_dict["battery_charge"] = p_charge
-
-            total_production += control_dict["battery_discharge"]
-            total_production -= control_dict["battery_charge"]
-
-        if abs(total_production - total_load) < threshold:
-            control_dict["overgeneration"] = 0
-            control_dict["loss_load"] = 0
-            for j in df:
-                df[j].append(control_dict[j])
-
-        elif total_production > total_load:
-            # here we consider we produced more than needed ? we pay the price of the full cost proposed?
-            # penalties ?
-            control_dict["overgeneration"] = total_production - total_load
-            control_dict["loss_load"] = 0
-            for j in df:
-                df[j].append(control_dict[j])
-            # df = df.append(control_dict, ignore_index=True)
-            # print('total_production > total_load')
-            # print(control_dict)
-
-        elif total_production < total_load:
-            control_dict["loss_load"] += total_load - total_production
-            control_dict["overgeneration"] = 0
-            for j in df:
-                df[j].append(control_dict[j])
-            # df = df.append(control_dict, ignore_index=True)
-            # print('total_production < total_load')
-            # print(control_dict)
+            control_dict.pop("pv_consummed")
+        except KeyError:
+            pass
 
         has_grid = self.architecture["grid"] == 1
         has_genset = self.architecture["genset"] == 1
