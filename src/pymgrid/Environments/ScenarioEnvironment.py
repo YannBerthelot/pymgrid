@@ -41,7 +41,6 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         self._grid_price_export_initial = self.mg._grid_price_export
         self._grid_status_ts_initial = self.mg._grid_status_ts
         self._grid_co2_initial = self.mg._grid_co2
-        self.set_timeseries(tsStarts[0], tsLength)
 
         tsStartIndex = np.random.choice(self.tsStarts)
         # setting the piece to be the main time series
@@ -52,19 +51,7 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
             )
             self.mg._pv_ts = pd.DataFrame(customPVTs, columns=["GH illum (lx)"])
 
-        self.mg._pv_ts = self.mg._pv_ts[tsStartIndex : (tsStartIndex + tsLength)]
-        self.mg._load_ts = self.mg._load_ts[tsStartIndex : (tsStartIndex + tsLength)]
-        self.mg._grid_price_import = self.mg._grid_price_import[
-            tsStartIndex : (tsStartIndex + tsLength)
-        ]
-        self.mg._grid_price_export = self.mg._grid_price_export[
-            tsStartIndex : (tsStartIndex + tsLength)
-        ]
-        self.mg._grid_status_ts = self.mg._grid_status_ts[
-            tsStartIndex : (tsStartIndex + tsLength)
-        ]
-        self.mg._grid_co2 = self.mg._grid_co2[tsStartIndex : (tsStartIndex + tsLength)]
-
+        self.set_timeseries(tsStarts[0], tsLength)
         # State space
 
         # self.mg.train_test_split() # we do not need it, use the whole time series
