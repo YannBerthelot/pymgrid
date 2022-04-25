@@ -49,12 +49,8 @@ if in_ipynb():
     init_notebook_mode(connected=False)
 
 np.random.seed(123)
-<<<<<<< HEAD
-# cf.set_config_file(offline=True, theme='pearl') #commented for now, issues with parallel processes
-=======
 
-#cf.set_config_file(offline=True, theme='pearl') #commented for now, issues with parallel processes
->>>>>>> expert_policies
+# cf.set_config_file(offline=True, theme='pearl') #commented for now, issues with parallel processes
 
 DEFAULT_HORIZON = 24  # in hours
 DEFAULT_TIMESTEP = 1  # in hours
@@ -354,16 +350,16 @@ class Microgrid:
     """
 
     def __init__(self, parameters, horizon=DEFAULT_HORIZON, timestep=DEFAULT_TIMESTEP):
-        #list of parameters
-        #this is a static dataframe: parameters of the microgrid that do not change with time
+        # list of parameters
+        # this is a static dataframe: parameters of the microgrid that do not change with time
 
         # self._param_check(parameters)
 
-        self.parameters = parameters['parameters']
-        self.architecture = parameters['architecture']
-        #different timeseries
-        self._load_ts=parameters['load']
-        self._pv_ts=parameters['pv']
+        self.parameters = parameters["parameters"]
+        self.architecture = parameters["architecture"]
+        # different timeseries
+        self._load_ts = parameters["load"]
+        self._pv_ts = parameters["pv"]
 
         self.pv = self._pv_ts.iloc[0, 0]
         self.load = self._load_ts.iloc[0, 0]
@@ -411,11 +407,14 @@ class Microgrid:
             )
         if self.architecture["genset"] == 1:
             self.genset = Genset(self.parameters)
-        if self.architecture['grid'] == 1:
-            self.grid = Grid(self.parameters, self._grid_status_ts.iloc[0,0],
-                             self._grid_price_import.iloc[0, 0],
-                             self._grid_price_export.iloc[0, 0],
-                             self._grid_co2.iloc[0, 0])
+        if self.architecture["grid"] == 1:
+            self.grid = Grid(
+                self.parameters,
+                self._grid_status_ts.iloc[0, 0],
+                self._grid_price_import.iloc[0, 0],
+                self._grid_price_export.iloc[0, 0],
+                self._grid_co2.iloc[0, 0],
+            )
 
     def _param_check(self, parameters):
         """Simple parameter checks"""
@@ -1348,70 +1347,73 @@ class Microgrid:
             # print('total_production < total_load')
             # print(control_dict)
 
-        has_grid = self.architecture['grid'] == 1
-        has_genset = self.architecture['genset'] == 1
-        has_battery = self.architecture['battery'] == 1
+        has_grid = self.architecture["grid"] == 1
+        has_genset = self.architecture["genset"] == 1
+        has_battery = self.architecture["battery"] == 1
 
         sources = 0.0
-        sinks = control_dict['load']
+        sinks = control_dict["load"]
 
         # Battery
         if has_battery:
-            p_charge, p_discharge = self._check_constraints_battery(control_dict['battery_charge'],
-                                                                    control_dict['battery_discharge'],
-                                                                    status)
-            production_dict['battery_charge'].append(p_charge)
-            production_dict['battery_discharge'].append(p_discharge)
+            p_charge, p_discharge = self._check_constraints_battery(
+                control_dict["battery_charge"],
+                control_dict["battery_discharge"],
+                status,
+            )
+            production_dict["battery_charge"].append(p_charge)
+            production_dict["battery_discharge"].append(p_discharge)
 
             sources += p_discharge
             sinks += p_charge
 
         if has_grid:
-            p_import, p_export = self._check_constraints_grid(control_dict['grid_import'],
-                                                                    control_dict['grid_export'])
-            production_dict['grid_import'].append(p_import)
-            production_dict['grid_export'].append(p_export)
+            p_import, p_export = self._check_constraints_grid(
+                control_dict["grid_import"], control_dict["grid_export"]
+            )
+            production_dict["grid_import"].append(p_import)
+            production_dict["grid_export"].append(p_export)
 
             sources += p_import
             sinks += p_export
 
         if has_genset:
-            p_genset = self._check_constraints_genset(control_dict['genset'])
-            production_dict['genset'].append(p_genset)
+            p_genset = self._check_constraints_genset(control_dict["genset"])
+            production_dict["genset"].append(p_genset)
             sources += p_genset
 
-        pv_required = sinks-sources
-        pv_available = control_dict['pv']
+        pv_required = sinks - sources
+        pv_available = control_dict["pv"]
 
-        if np.abs(pv_required-pv_available) < 1e-3:         # meeting demand
+        if np.abs(pv_required - pv_available) < 1e-3:  # meeting demand
             pv_consumed = pv_available
             loss_load = 0
             pv_curtailed = 0
             overgeneration = 0
 
-        elif pv_required > pv_available:                    # loss load
+        elif pv_required > pv_available:  # loss load
             pv_consumed = pv_available
-            loss_load = pv_required-pv_available
+            loss_load = pv_required - pv_available
             pv_curtailed = 0
             overgeneration = 0
 
-        elif 0 < pv_required < pv_available:                # curtail pv
+        elif 0 < pv_required < pv_available:  # curtail pv
             pv_consumed = pv_required
             loss_load = 0
-            pv_curtailed = pv_available-pv_required
+            pv_curtailed = pv_available - pv_required
             overgeneration = 0
 
-        else:                                               # overgeneration. Requires NO pv whatsoever
+        else:  # overgeneration. Requires NO pv whatsoever
             assert pv_required < 0
             pv_consumed = 0
             loss_load = 0
             pv_curtailed = pv_available if pv_available > 0 else 0
             overgeneration = -pv_required
 
-        production_dict['pv_consummed'].append(pv_consumed)
-        production_dict['loss_load'].append(loss_load)
-        production_dict['pv_curtailed'].append(pv_curtailed)
-        production_dict['overgeneration'].append(overgeneration)
+        production_dict["pv_consummed"].append(pv_consumed)
+        production_dict["loss_load"].append(loss_load)
+        production_dict["pv_curtailed"].append(pv_curtailed)
+        production_dict["overgeneration"].append(overgeneration)
 
         return production_dict
 
