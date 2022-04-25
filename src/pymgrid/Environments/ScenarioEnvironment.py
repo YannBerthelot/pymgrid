@@ -33,18 +33,17 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         self.mg = copy(env_config["microgrid"])
         self.tsStarts = tsStarts
         self.tsLength = tsLength
+        if not (customPVTs is None or customLoadTs is None):
+            self.mg._load_ts = pd.DataFrame(
+                customLoadTs, columns=["Electricity:Facility [kW](Hourly)"]
+            )
+            self.mg._pv_ts = pd.DataFrame(customPVTs, columns=["GH illum (lx)"])
         self._pv_ts_initial = pv_factor * self.mg._pv_ts
         self._load_ts_initial = self.mg._load_ts
         self._grid_price_import_initial = self.mg._grid_price_import
         self._grid_price_export_initial = self.mg._grid_price_export
         self._grid_status_ts_initial = self.mg._grid_status_ts
         self._grid_co2_initial = self.mg._grid_co2
-
-        if not (customPVTs is None or customLoadTs is None):
-            self.mg._load_ts = pd.DataFrame(
-                customLoadTs, columns=["Electricity:Facility [kW](Hourly)"]
-            )
-            self.mg._pv_ts = pd.DataFrame(customPVTs, columns=["GH illum (lx)"])
 
         self.set_timeseries(tsStarts[0], tsLength)
         # setting the piece to be the main time series
