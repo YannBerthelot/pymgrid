@@ -7,7 +7,16 @@ from copy import copy
 
 
 class ScenarioEnvironment(pymgridEnvs.Environment):
-    def __init__(self, tsStarts, tsLength, env_config, pv_factor=1.0, seed=42):
+    def __init__(
+        self,
+        tsStarts,
+        tsLength,
+        env_config,
+        customPVTs=None,
+        customLoadTs=None,
+        pv_factor=1.0,
+        seed=42,
+    ):
         """
         Input
         int tsStartIndex -- start of the piece of time series
@@ -30,6 +39,13 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         self._grid_price_export_initial = self.mg._grid_price_export
         self._grid_status_ts_initial = self.mg._grid_status_ts
         self._grid_co2_initial = self.mg._grid_co2
+
+        if not (customPVTs is None or customLoadTs is None):
+            self.mg._load_ts = pd.DataFrame(
+                customLoadTs, columns=["Electricity:Facility [kW](Hourly)"]
+            )
+            self.mg._pv_ts = pd.DataFrame(customPVTs, columns=["GH illum (lx)"])
+
         self.set_timeseries(tsStarts[0], tsLength)
         # setting the piece to be the main time series
 
@@ -131,13 +147,23 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
         tsStartIndex,
         tsLength,
         env_config,
+        customPVTs=None,
+        customLoadTs=None,
         pv_factor=1.0,
         action_design="rule-based",
         Na=6,
         mode="naive",
         seed=42,
     ):
-        super().__init__(tsStartIndex, tsLength, env_config, pv_factor, seed)
+        super().__init__(
+            tsStartIndex,
+            tsLength,
+            env_config,
+            customPVTs,
+            customLoadTs,
+            pv_factor,
+            seed,
+        )
 
         # cspla action design
         print(f"Action design : {action_design}")
