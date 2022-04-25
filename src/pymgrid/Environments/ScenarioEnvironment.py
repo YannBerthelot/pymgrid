@@ -7,12 +7,23 @@ from copy import copy
 
 
 class ScenarioEnvironment(pymgridEnvs.Environment):
-    def __init__(self, tsStarts, tsLength, env_config, pv_factor=1.0, seed=42):
+    def __init__(
+        self,
+        tsStarts,
+        tsLength,
+        env_config,
+        customPVTs=None,
+        customLoadTs=None,
+        pv_factor=1.0,
+        seed=42,
+    ):
         """
         Input
         int tsStartIndex -- start of the piece of time series
         int tsLength -- length of the piece of the time series to extract starting from tsStartIndex
         dict envConfig -- pymgridEnvs.Environment native dictionary for config
+        float[][] customPVTS  --  (T,1)-shaped np.array representing pv time series (if None, the native time series is used)
+        float[][] customLoadTS   --  (T,1)-shaped np.array representing load time series (if None, the native time series is used)
         """
         # Set seed
         np.random.seed(seed)
@@ -31,7 +42,28 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         self._grid_status_ts_initial = self.mg._grid_status_ts
         self._grid_co2_initial = self.mg._grid_co2
         self.set_timeseries(tsStarts[0], tsLength)
+
+        tsStartIndex = np.random.choice(self.tsStarts)
         # setting the piece to be the main time series
+
+        if not (customPVTs is None or customLoadTs is None):
+            self.mg._load_ts = pd.DataFrame(
+                customLoadTs, columns=["Electricity:Facility [kW](Hourly)"]
+            )
+            self.mg._pv_ts = pd.DataFrame(customPVTs, columns=["GH illum (lx)"])
+
+        self.mg._pv_ts = self.mg._pv_ts[tsStartIndex : (tsStartIndex + tsLength)]
+        self.mg._load_ts = self.mg._load_ts[tsStartIndex : (tsStartIndex + tsLength)]
+        self.mg._grid_price_import = self.mg._grid_price_import[
+            tsStartIndex : (tsStartIndex + tsLength)
+        ]
+        self.mg._grid_price_export = self.mg._grid_price_export[
+            tsStartIndex : (tsStartIndex + tsLength)
+        ]
+        self.mg._grid_status_ts = self.mg._grid_status_ts[
+            tsStartIndex : (tsStartIndex + tsLength)
+        ]
+        self.mg._grid_co2 = self.mg._grid_co2[tsStartIndex : (tsStartIndex + tsLength)]
 
         # State space
 
@@ -98,6 +130,7 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         ]
 
     def reset(self, testing=False):
+
         if "testing" in self.env_config:
             testing = self.env_config["testing"]
         self.round = 1
@@ -131,13 +164,17 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
         tsStartIndex,
         tsLength,
         env_config,
+        customPVTs=None,
+        customLoadTs=None,
         pv_factor=1.0,
         action_design="rule-based",
         Na=6,
         mode="naive",
         seed=42,
     ):
-        super().__init__(tsStartIndex, tsLength, env_config, pv_factor, seed)
+        super().__init__(
+            tsStartIndex, tsLength, env_config, customPVTs, customLoadTs, seed
+        )
 
         # cspla action design
         print(f"Action design : {action_design}")
