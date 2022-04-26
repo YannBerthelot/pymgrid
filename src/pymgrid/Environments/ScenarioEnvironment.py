@@ -7,7 +7,16 @@ from copy import copy
 
 
 class ScenarioEnvironment(pymgridEnvs.Environment):
-    def __init__(self, tsStarts, tsLength, env_config, pv_factor=1.0, seed=42):
+    def __init__(
+        self,
+        tsStarts,
+        tsLength,
+        env_config,
+        customPVTs=None,
+        customLoadTs=None,
+        pv_factor=1.0,
+        seed=42,
+    ):
         """
         Input
         int tsStartIndex -- start of the piece of time series
@@ -22,6 +31,11 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         # Microgrid
         self.env_config = env_config
         self.mg = copy(env_config["microgrid"])
+        if not (customPVTs is None or customLoadTs is None):
+            self.mg._load_ts = pd.DataFrame(
+                customLoadTs, columns=["Electricity:Facility [kW](Hourly)"]
+            )
+            self.mg._pv_ts = pd.DataFrame(customPVTs, columns=["GH illum (lx)"])
         self.tsStarts = tsStarts
         self.tsLength = tsLength
         self._pv_ts_initial = pv_factor * self.mg._pv_ts
@@ -131,13 +145,23 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
         tsStartIndex,
         tsLength,
         env_config,
+        customPVTs=None,
+        customLoadTs=None,
         pv_factor=1.0,
         action_design="rule-based",
         Na=6,
         mode="naive",
         seed=42,
     ):
-        super().__init__(tsStartIndex, tsLength, env_config, pv_factor, seed)
+        super().__init__(
+            tsStartIndex,
+            tsLength,
+            env_config,
+            customPVTs,
+            customLoadTs,
+            pv_factor,
+            seed,
+        )
 
         # cspla action design
         print(f"Action design : {action_design}")
