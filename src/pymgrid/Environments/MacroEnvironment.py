@@ -420,8 +420,6 @@ class MacroEnvironment(pymgridEnvs.Environment):
         if "testing" in self.env_config:
             testing = self.env_config["testing"]
         self.round = 1
-        start = np.random.choice(self.tsStarts)
-        self.set_timeseries(start, self.tsLength)
         # Reseting microgrid
         self.mg.reset(testing=testing)
         if testing == True:
