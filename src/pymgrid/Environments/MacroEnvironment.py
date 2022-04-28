@@ -416,6 +416,33 @@ class MacroEnvironment(pymgridEnvs.Environment):
         }
         return policies[list(set(policies.keys()))[action]]
 
+    def reset(self, testing=False):
+        if "testing" in self.env_config:
+            testing = self.env_config["testing"]
+        self.round = 1
+        start = np.random.choice(self.tsStarts)
+        self.set_timeseries(start, self.tsLength)
+        # Reseting microgrid
+        self.mg.reset(testing=testing)
+        if testing == True:
+            self.TRAIN = False
+        elif self.resampling_on_reset == True:
+            Preprocessing.sample_reset(
+                self.mg.architecture["grid"] == 1,
+                self.saa,
+                self.mg,
+                sampling_args=sampling_args,
+            )
+
+        self.state, self.reward, self.done, self.info = (
+            self.transition(),
+            0,
+            False,
+            {},
+        )
+
+        return self.state
+
     def step(self, action):
 
         # CONTROL (pymgrid's Native)
