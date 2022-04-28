@@ -356,6 +356,66 @@ class MacroEnvironment(pymgridEnvs.Environment):
 
         self.action_space = gym.spaces.Discrete(self.Na)
 
+    def micro_policy(self, action):
+        mg = self.mg
+        load = mg.load
+        pv = mg.pv
+        capa_to_charge = mg.battery.capa_to_charge
+        capa_to_discharge = mg.battery.capa_to_discharge
+        policies = {
+            "sell_excess": {  # 0
+                "battery_charge": 0,
+                "battery_discharge": 0,
+                "grid_import": 0,
+                "grid_export": max(0, pv - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "store_excess": {  # 1
+                "battery_charge": min(max(0, pv - load), capa_to_charge),
+                "battery_discharge": 0,
+                "grid_import": 0,
+                "grid_export": max(0, pv - capa_to_charge - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "fill_battery_from_grid": {  # 2
+                "battery_charge": capa_to_charge,
+                "battery_discharge": 0,
+                "grid_import": max(0, capa_to_charge + load - pv),
+                "grid_export": 0,
+                "pv": pv,
+                "genset": 0,
+            },
+            "discharge_to_sell": {  # 3
+                "battery_charge": 0,
+                "battery_discharge": capa_to_discharge,
+                "grid_import": 0,
+                "grid_export": max(0, pv + capa_to_discharge - load),
+                "pv": pv,
+                "genset": 0,
+            },
+            "discharge_for_load": {  # 4
+                "battery_charge": 0,
+                "battery_discharge": min(capa_to_discharge, max(0, load - pv)),
+                "grid_import": max(
+                    0, load - pv - min(capa_to_discharge, max(0, load - pv))
+                ),
+                "grid_export": 0,
+                "pv": pv,
+                "genset": 0,
+            },
+            "buy_for_load": {  # 5
+                "battery_charge": 0,
+                "battery_discharge": 0,
+                "grid_import": max(0, load - pv),
+                "grid_export": 0,
+                "pv": pv,
+                "genset": 0,
+            },
+        }
+        return policies[list(set(policies.keys()))[action]]
+
     def step(self, action):
 
         # CONTROL (pymgrid's Native)
@@ -376,7 +436,7 @@ class MacroEnvironment(pymgridEnvs.Environment):
         self.reward = 0
 
         for i in np.arange(self.switchingFrequency):
-            control_dict = self.microPolicies[action].getAction(self)
+            control_dict = self.micro_policy(self.microPolicies[action].getAction(self))
             print("CD:", control_dict)
 
             self.mg.run(control_dict)
