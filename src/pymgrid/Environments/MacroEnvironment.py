@@ -437,7 +437,7 @@ class MacroEnvironment(pymgridEnvs.Environment):
 
         for i in np.arange(self.switchingFrequency):
             control_dict = self.micro_policy(self.microPolicies[action].getAction(self))
-            print("CD:", control_dict)
+            # print("CD:", control_dict)
 
             self.mg.run(control_dict)
 
