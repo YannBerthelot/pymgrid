@@ -448,8 +448,4 @@ class MacroEnvironment(pymgridEnvs.Environment):
             self.info = {}
             self.round += 1
 
-            # ??do we need it?
-            if self.done:
-                self.reset()
-
         return self.state, self.reward, self.done, self.info
