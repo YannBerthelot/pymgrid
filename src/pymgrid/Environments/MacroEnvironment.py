@@ -347,14 +347,15 @@ class MacroEnvironment(pymgridEnvs.Environment):
         print("\nSEED", seed)
         print("\n")
         super(MacroEnvironment, self).__init__(env_config=env_config, seed=seed)
-
+        self.env_config = env_config
         self.switchingFrequency = switchingFrequency
         self.microPolicies = microPolicies
 
         # microPolicy action design
         self.Na = len(self.microPolicies)
-
+        self.TRAIN = True
         self.action_space = gym.spaces.Discrete(self.Na)
+        self.reset()
 
     def micro_policy(self, action):
         mg = self.mg
