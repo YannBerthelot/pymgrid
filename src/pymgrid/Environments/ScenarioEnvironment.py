@@ -2,6 +2,7 @@ import pymgrid.Environments.Environment as pymgridEnvs
 import numpy as np
 import pandas as pd
 import pymgrid.Environments.Preprocessing as Preprocessing
+from pymgrid.Environments.MacroEnvironment import RBCPolicy
 import gym
 from copy import copy
 
@@ -27,10 +28,10 @@ class ScenarioEnvironment(pymgridEnvs.Environment):
         np.random.seed(seed)
 
         self.TRAIN = True  # no reward smoothing if set to false
-
         # Microgrid
         self.env_config = env_config
         self.mg = copy(env_config["microgrid"])
+        self.RBC = RBCPolicy(self.mg)
         self.tsStarts = tsStarts
         self.tsLength = tsLength
         if not (customPVTs is None or customLoadTs is None):
@@ -541,6 +542,6 @@ class CSPLAScenarioEnvironment(ScenarioEnvironment):
         if self.action_design == "large":
             return self.larger_micro_policy_failsafe(action)
         elif self.action_design == "rule-based":
-            return self.rule_based(self.mode)
+            return self.RBC.getAction(self)
         else:
             return self.micro_policy(action)
