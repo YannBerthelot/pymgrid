@@ -30,16 +30,7 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
         )
 
     @staticmethod
-    def rule_based_policy(self, policy: str = "just_buy", mg: Microgrid = None) -> dict:
-        if mg is not None:
-            self.mg = mg
-        if policy == "just_buy":
-            return self.just_buy(self.mg)
-        else:
-            raise ValueError(f"Unknown policy {policy}")
-
-    @staticmethod
-    def just_buy(self, mg) -> dict:
+    def just_buy(mg) -> dict:
         balance = mg.load - mg.pv
         control_dict = {
             "battery_charge": 0,
@@ -53,7 +44,7 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
         return control_dict
 
     @staticmethod
-    def buy_sell(self, mg) -> dict:
+    def buy_sell(mg) -> dict:
         balance = mg.load - mg.pv
         control_dict = {
             "battery_charge": 0,
@@ -67,7 +58,7 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
         return control_dict
 
     @staticmethod
-    def buy_store(self, mg) -> dict:
+    def buy_store(mg) -> dict:
         balance = mg.load - mg.pv
         control_dict = {
             "battery_charge": -min(0, balance),
@@ -81,7 +72,7 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
         return control_dict
 
     @staticmethod
-    def store(self, mg) -> dict:
+    def store(mg) -> dict:
         capa_to_charge = mg.battery.capa_to_charge
         balance = mg.load - mg.pv
         control_dict = {
@@ -96,7 +87,7 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
         return control_dict
 
     @staticmethod
-    def discharge(self, mg) -> dict:
+    def discharge(mg) -> dict:
         capa_to_discharge = mg.battery.capa_to_discharge
         balance = mg.load - mg.pv
         control_dict = {
@@ -111,7 +102,7 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
         return control_dict
 
     @staticmethod
-    def buy_low_discharge_high(self, mg, price_mode="mean") -> dict:
+    def buy_low_discharge_high(mg, price_mode="mean") -> dict:
         if price_mode == "mean":
             price_ref = mg._grid_price_import.mean().item()
         elif price_mode == "min":
@@ -119,6 +110,13 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
         else:
             raise ValueError(f"Unknown price mode : {price_mode}")
         if mg._next_grid_price_import < price_ref:
-            return self.store(mg)
+            return RuleBaseControl.store(mg)
         else:
-            return self.discharge(mg)
+            return RuleBaseControl.discharge(mg)
+
+    @staticmethod
+    def rule_based_policy(policy: str = "just_buy", mg: Microgrid = None) -> dict:
+        if policy == "just_buy":
+            return RuleBaseControl.just_buy(mg)
+        else:
+            raise ValueError(f"Unknown policy {policy}")
