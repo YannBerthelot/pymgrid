@@ -18,6 +18,13 @@ class Policies:
     def _Na(self):
         return len(self.policies)
 
+    def get_action(self, action: int, mg):
+        """
+        Policy orchestration
+        """
+
+        return self.policies[action](mg)
+
 
 class RuleBaseControl(CSPLAScenarioEnvironment):
     def __init__(
@@ -160,13 +167,6 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
 
         return self.state, self.reward, self.done, self.info
 
-    def get_action(self, action: int):
-        """
-        Policy orchestration
-        """
-
-        return self.policies[action](self.mg)
-
 
 class MacroEnvironment(pymgridEnvs.Environment):
     def __init__(self, env_config, microPolicies, switchingFrequency=1, seed=42):
@@ -181,8 +181,8 @@ class MacroEnvironment(pymgridEnvs.Environment):
         super(MacroEnvironment, self).__init__(env_config=env_config, seed=seed)
         self.env_config = env_config
         self.switchingFrequency = switchingFrequency
-        policies = Policies()
-        self.microPolicies = policies.policies
+        self.policies = Policies()
+        self.microPolicies = self.policies.policies
 
         # microPolicy action design
         self.Na = policies._Na
@@ -236,7 +236,7 @@ class MacroEnvironment(pymgridEnvs.Environment):
 
         for i in np.arange(self.switchingFrequency):
             # control_dict = self.micro_policy(self.microPolicies[action].getAction(self))
-            control_dict = RuleBaseControl.get_action(action)
+            control_dict = self.policies.get_action(action, self.mg)
             # print("CD:", control_dict)
 
             self.mg.run(control_dict)
