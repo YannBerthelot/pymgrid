@@ -1,5 +1,22 @@
+import gym
+import numpy as np
 from pymgrid.Environments.ScenarioEnvironment import CSPLAScenarioEnvironment
+import pymgrid.Environments.Environment as pymgridEnvs
 from pymgrid.Microgrid import Microgrid
+
+
+class Policies:
+    def __init__(self) -> None:
+        self.policies = {
+            0: RuleBaseControl.just_buy,
+            1: RuleBaseControl.buy_sell,
+            2: RuleBaseControl.buy_low_discharge_high,
+            3: RuleBaseControl.buy_min_discharge_high,
+        }
+
+    @property
+    def _Na(self):
+        return len(self.policies)
 
 
 class RuleBaseControl(CSPLAScenarioEnvironment):
@@ -28,6 +45,7 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
             mode,
             seed,
         )
+        self.policies = Policies().policies
 
     @staticmethod
     def just_buy(mg) -> dict:
@@ -115,6 +133,14 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
             return RuleBaseControl.discharge(mg)
 
     @staticmethod
+    def buy_mean_discharge_high(mg) -> dict:
+        return RuleBaseControl.buy_low_discharge_high(mg)
+
+    @staticmethod
+    def buy_min_discharge_high(mg) -> dict:
+        return RuleBaseControl.buy_low_discharge_high(mg, price_mode="min")
+
+    @staticmethod
     def rule_based_policy(policy: str = "just_buy", mg: Microgrid = None) -> dict:
         if policy == "just_buy":
             return RuleBaseControl.just_buy(mg)
@@ -131,5 +157,95 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
         self.info = {}
         self.round += 1
         # print("reward", self.reward)
+
+        return self.state, self.reward, self.done, self.info
+
+    def get_action(self, action: int):
+        """
+        Policy orchestration
+        """
+
+        return self.policies[action](self.mg)
+
+
+class MacroEnvironment(pymgridEnvs.Environment):
+    def __init__(self, env_config, microPolicies, switchingFrequency=1, seed=42):
+        """
+        Input
+        list microPolicies -- list of Policy objects implementing method getAction: mg |--> action
+        int switchingFrequency -- the frequency of switching micro policies
+        """
+        print("\nENV", env_config)
+        print("\nSEED", seed)
+        print("\n")
+        super(MacroEnvironment, self).__init__(env_config=env_config, seed=seed)
+        self.env_config = env_config
+        self.switchingFrequency = switchingFrequency
+        policies = Policies()
+        self.microPolicies = policies.policies
+
+        # microPolicy action design
+        self.Na = policies._Na
+        self.TRAIN = True
+        self.action_space = gym.spaces.Discrete(self.Na)
+        self.reset()
+
+    def reset(self, testing=False):
+        if "testing" in self.env_config:
+            testing = self.env_config["testing"]
+        self.round = 1
+        # Reseting microgrid
+        self.mg.reset(testing=testing)
+        if testing == True:
+            self.TRAIN = False
+        elif self.resampling_on_reset == True:
+            Preprocessing.sample_reset(
+                self.mg.architecture["grid"] == 1,
+                self.saa,
+                self.mg,
+                sampling_args=sampling_args,
+            )
+
+        self.state, self.reward, self.done, self.info = (
+            self.transition(),
+            0,
+            False,
+            {},
+        )
+
+        return self.state
+
+    def step(self, action):
+
+        # CONTROL (pymgrid's Native)
+        if self.done:
+            print("WARNING : EPISODE DONE")  # should never reach this point
+            return self.state, self.reward, self.done, self.info
+        try:
+            assert self.observation_space.contains(self.state)
+        except AssertionError:
+            print("ERROR : INVALID STATE", self.state)
+
+        try:
+            assert self.action_space.contains(action)
+        except AssertionError:
+            print("ERROR : INVALD ACTION", action)
+
+        # UPDATE THE MICROGRID (self.switchingFrequency times)
+        self.reward = 0
+
+        for i in np.arange(self.switchingFrequency):
+            # control_dict = self.micro_policy(self.microPolicies[action].getAction(self))
+            control_dict = RuleBaseControl.get_action(action)
+            # print("CD:", control_dict)
+
+            self.mg.run(control_dict)
+
+            # COMPUTE NEW STATE AND REWARD
+            self.state = self.transition()
+            self.reward += self.get_reward()
+            self.done = self.mg.done
+            self.info = {}
+            self.round += 1
 
         return self.state, self.reward, self.done, self.info
