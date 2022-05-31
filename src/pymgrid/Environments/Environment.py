@@ -69,7 +69,7 @@ class Environment(gym.Env):
         self.env_config = env_config
         self.mg = env_config["microgrid"]
         # State space
-        self.mg.train_test_split()
+        # self.mg.train_test_split()
         # np.zeros(2+self.mg.architecture['grid']*3+self.mg.architecture['genset']*1)
         # Number of states
         self.Ns = len(self.mg._df_record_state.keys()) + 1
