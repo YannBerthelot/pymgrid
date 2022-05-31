@@ -185,7 +185,7 @@ class MacroEnvironment(pymgridEnvs.Environment):
         self.microPolicies = self.policies.policies
 
         # microPolicy action design
-        self.Na = policies._Na
+        self.Na = self.policies._Na
         self.TRAIN = True
         self.action_space = gym.spaces.Discrete(self.Na)
         self.reset()
