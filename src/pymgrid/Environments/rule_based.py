@@ -120,3 +120,16 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
             return RuleBaseControl.just_buy(mg)
         else:
             raise ValueError(f"Unknown policy {policy}")
+
+    def step(self, control_dict):
+        self.mg.run(control_dict)
+
+        # COMPUTE NEW STATE AND REWARD
+        self.state = self.transition()
+        self.reward = self.get_reward()
+        self.done = self.mg.done
+        self.info = {}
+        self.round += 1
+        # print("reward", self.reward)
+
+        return self.state, self.reward, self.done, self.info
