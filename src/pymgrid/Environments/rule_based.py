@@ -22,10 +22,8 @@ class Policies:
         """
         Policy orchestration
         """
-        print(f"{self.policies=}")
-        print(f"{self.policies[action]=}")
 
-        return self.policies[action](mg)
+        return self.policies[int(action)](mg)
 
 
 class RuleBaseControl(CSPLAScenarioEnvironment):
