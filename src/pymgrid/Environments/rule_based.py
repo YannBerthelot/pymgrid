@@ -121,7 +121,7 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
         else:
             raise ValueError(f"Unknown policy {policy}")
 
-    def step(self, control_dict):
+    def step_RBC(self, control_dict):
         self.mg.run(control_dict)
 
         # COMPUTE NEW STATE AND REWARD
