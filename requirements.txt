@@ -1,8 +1,8 @@
-cvxpy
+cvxpy[extra]
 pandas
 numpy
 matplotlib
 plotly
 seaborn
 cufflinks
-statsmodels
+statsmodels[extra]
