@@ -32,7 +32,8 @@ import matplotlib.pyplot as plt
 import cufflinks as cf
 from IPython.display import display
 from IPython import get_ipython
-from pymgrid.algos.Control import Benchmarks
+
+# from pymgrid.algos.Control import Benchmarks
 
 
 def in_ipynb():
@@ -399,7 +400,7 @@ class Microgrid:
         self._data_set_to_use_default = "all"
         self._data_set_to_use = "all"
 
-        self.benchmarks = Benchmarks(self)
+        # self.benchmarks = Benchmarks(self)
 
         if self.architecture["battery"] == 1:
             self.battery = Battery(
