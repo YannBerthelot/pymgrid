@@ -15,5 +15,6 @@ setup(
         "plotly",
         "cufflinks",
         "gym",
+        "statsmodels",
     ],
 )
