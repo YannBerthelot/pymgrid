@@ -16,5 +16,6 @@ setup(
         "cufflinks",
         "gym",
         "statsmodels",
+        "cvxpy",
     ],
 )

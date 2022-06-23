@@ -6,3 +6,4 @@ plotly
 seaborn
 cufflinks
 statsmodels
+cvxpy
