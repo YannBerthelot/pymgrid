@@ -23,7 +23,8 @@ You should have received a copy of the GNU Lesser General Public License along w
 import pandas as pd
 import numpy as np
 from copy import copy
-import cvxpy as cp
+
+# import cvxpy as cp
 import operator
 import sys
 from plotly.offline import init_notebook_mode, iplot
@@ -53,7 +54,7 @@ np.random.seed(123)
 
 DEFAULT_HORIZON = 24  # in hours
 DEFAULT_TIMESTEP = 1  # in hours
-ZERO = 10 ** -5
+ZERO = 10**-5
 
 """
 The following classes are used to contain the information related to the different components
