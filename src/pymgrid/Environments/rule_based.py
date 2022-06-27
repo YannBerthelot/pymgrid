@@ -169,7 +169,9 @@ class RuleBaseControl(CSPLAScenarioEnvironment):
 
 
 class MacroEnvironment(pymgridEnvs.Environment):
-    def __init__(self, env_config, microPolicies, switchingFrequency=1, seed=42):
+    def __init__(
+        self, env_config, microPolicies, switchingFrequency=1, pv_factor=1, seed=42
+    ):
         """
         Input
         list microPolicies -- list of Policy objects implementing method getAction: mg |--> action
@@ -187,6 +189,7 @@ class MacroEnvironment(pymgridEnvs.Environment):
         # microPolicy action design
         self.Na = self.policies._Na
         self.TRAIN = True
+        self._pv_ts_initial = pv_factor * self.mg._pv_ts
         self.action_space = gym.spaces.Discrete(self.Na)
         self.reset()
 
